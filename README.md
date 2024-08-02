@@ -13,10 +13,18 @@ cd app
 npm install
 ```
 
+### 修改代码结构
+
 删除`public/index.html`,修改`/routes/index.js`,如下：
 
 ```js
 router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
+```
+### 启动项目
+
+```sh
+# npm  install -g  nodemon
+nodemon start
 ```
