@@ -2,9 +2,9 @@
 
 基于Node.js的API服务器脚手架，使用express+mysql+sequelize  
 
-## 创建Express项目
+## 03 创建Express项目
 
-### 安装脚手架
+### 1. 安装脚手架
 
 ```sh
 npm  install -g  express-generator@4
@@ -13,7 +13,7 @@ cd app
 npm install
 ```
 
-### 修改代码结构
+### 2. 修改代码结构
 
 删除`public/index.html`,修改`/routes/index.js`,如下：
 
@@ -22,9 +22,20 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 ```
-### 启动项目
+
+### 3. 启动项目
 
 ```sh
 # npm  install -g  nodemon
 nodemon start
+```
+
+## 09 使用sequelize ORM
+
+### 1. 安装sequelize
+
+```sh
+npm install --g sequelize-cli
+npm install sequelize mysql2
+sequelize init
 ```
