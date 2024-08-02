@@ -115,4 +115,4 @@ sequelize db:seed:all
 |第七步|sequelize seed:generate --name article|新建种子文件|
 |第八步| 人工处理| 将种子文件修改为自己想填充的数据|
 |第九步|sequelize db:seed:all|运行种子文件，将数据填充到数据表中|
-|第十步|npm start|启动项目|
+|第十步|nodemon start|启动项目|
