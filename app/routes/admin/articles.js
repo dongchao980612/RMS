@@ -89,19 +89,33 @@ router.get('/:id', async function (req, res, next) {
  */
 router.post('/', async function (req, res, next) {
     try {
-        const article = await Article.create(req.body);
+
+        // 验证参数
+        const body = filterBody(req);
+
+        const article = await Article.create(body);
         res.status(201).json({
             status: true,
             data: article,
             message: '文章创建成功'
         });
     } catch (error) {
-        res.status(500).json({
-            status: false,
-            data: [],
-            message: '文章创建失败',
-            errors: [error.message]
-        });
+        if (error.name === 'SequelizeValidationError') {
+            const errors = error.errors.map(e => e.message);
+            return res.status(400).json({
+                status: false,
+                message: '请求参数错误',
+                errors: errors
+            });
+        }
+        else {
+            res.status(500).json({
+                status: false,
+                data: [],
+                message: '文章创建失败',
+                errors: [error.message]
+            });
+        }
     }
 });
 /**
@@ -144,6 +158,10 @@ router.put('/:id', async function (req, res, next) {
     try {
         const { id } = req.params;
         const article = await Article.findByPk(id);
+
+        // 验证参数
+        const body = filterBody(req);
+
         if (article) {
             await article.update(req.body);
             res.json({
@@ -196,5 +214,19 @@ router.get('/page/:page', async function (req, res, next) {
         });
     }
 });
+
+
+/*
+ * 白名单过滤
+ * @ param: whiteList
+ * @ return 
+ */
+function filterBody(req) {
+    return {
+        title: req.body.title,
+        content: req.body.content,
+    };
+}
+
 
 module.exports = router;
