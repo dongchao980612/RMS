@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { Article } = require('../../models');
+const { Category } = require('../../models');
 const { Op } = require('sequelize');
 const {
     NotFoundError,
@@ -10,8 +10,8 @@ const {
 } = require('../../utils/response');
 
 /**
- * 查询文章列表
- * GET /admin/articles
+ * 查询分类列表
+ * GET /admin/categories
  */
 router.get('/', async function (req, res) {
     try {
@@ -28,18 +28,18 @@ router.get('/', async function (req, res) {
             offset: offset
         };
 
-        if (query.title) {
+        if (query.name) {
             condition.where = {
-                title: {
-                    [Op.like]: `%${query.title}%`
+                name: {
+                    [Op.like]: `%${query.name}%`
                 }
             };
         }
 
-        const { count, rows } = await Article.findAndCountAll(condition);
-        success(res, '查询文章列表成功', {
+        const { count, rows } = await Category.findAndCountAll(condition);
+        success(res, '查询分类列表成功', {
             status: true,
-            article: rows,
+            category: rows,
             pagination: {
                 total: count,
                 currentPage,
@@ -54,22 +54,22 @@ router.get('/', async function (req, res) {
 
 
 /**
- * 查询文章详情
- * GET /admin/articles/:id
+ * 查询分类详情
+ * GET /admin/categories/:id
  */
 router.get('/:id', async function (req, res) {
     try {
-        const article = await getArticle(req);
+        const category = await getCategory(req);
 
-        success(res, '查询文章详情成功', { article });
+        success(res, '查询分类详情成功', { category });
     } catch (error) {
         failure(res, error)
     }
 });
 
 /**
- * 创建文章
- * POST /admin/articles
+ * 创建分类
+ * POST /admin/categories
  */
 router.post('/', async function (req, res) {
     try {
@@ -77,25 +77,25 @@ router.post('/', async function (req, res) {
         // 验证参数
         const body = filterBody(req);
 
-        const article = await Article.create(body);
+        const category = await Category.create(body);
 
-        success(res, '创建文章成功', { article }, 201);
+        success(res, '创建分类成功', { category }, 201);
 
     } catch (error) {
         failure(res, error)
     }
 });
 /**
- * 删除文章
- * DELETE /admin/articles/:id
+ * 删除分类
+ * DELETE /admin/categories/:id
  */
 router.delete('/:id', async function (req, res) {
     try {
-        const article = await getArticle(req);
+        const category = await getCategory(req);
 
-        await article.destroy();
+        await category.destroy();
 
-        success(res, '删除文章成功', { article });
+        success(res, '删除分类成功', { category });
 
     } catch (error) {
         failure(res, error)
@@ -103,21 +103,21 @@ router.delete('/:id', async function (req, res) {
 });
 
 /*
- * 更新文章
- * PUT /admin/articles/:id
+ * 更新分类
+ * PUT /admin/categories/:id
  */
 router.put('/:id', async function (req, res) {
     try {
 
-        const article = await getArticle(req);
+        const category = await getCategory(req);
 
         // 验证参数
         const body = filterBody(req);
 
 
-        await article.update(body);
+        await category.update(body);
 
-        success(res, '更新文章成功', { article });
+        success(res, '更新分类成功', { category });
 
     } catch (error) {
         failure(res, error)
@@ -126,32 +126,32 @@ router.put('/:id', async function (req, res) {
 
 
 /**
- * 公共方法 查询当前文章
+ * 公共方法 查询当前分类
  */
-async function getArticle(req) {
-    // 获取文章ID
+async function getCategory(req) {
+    // 获取分类ID
     const { id } = req.params;
 
-    //查询当前文章
-    const article = await Article.findByPk(id);
+    //查询当前分类
+    const category = await Category.findByPk(id);
 
     // 没找到抛出异常
-    if (!article) {
-        throw new NotFoundError(`ID: ${id} 的文章未找到`);
+    if (!category) {
+        throw new NotFoundError(`ID: ${id} 的分类未找到`);
     }
 
-    return article;
+    return category;
 }
 
 /*
  * 白名单过滤
  * @ param: req
- * @ return 
+ * @ return  
  */
 function filterBody(req) {
     return {
-        title: req.body.title,
-        content: req.body.content,
+        name: req.body.name,
+        rank: req.body.rank,
     };
 }
 
