@@ -3,6 +3,13 @@ const router = express.Router();
 
 const { Article } = require('../../models');
 const { Op } = require('sequelize');
+const {
+    NotFoundError,
+    success,
+    failure
+} = require('../../utils/response');
+const article = require('../../models/article');
+
 /**
  * 查询文章列表
  * GET /admin/articles
@@ -31,24 +38,18 @@ router.get('/', async function (req, res, next) {
         }
 
         const { count, rows } = await Article.findAndCountAll(condition);
-
-        res.json({
+        success(res, '查询文章列表成功', {
             status: true,
+            article: rows,
             pagination: {
                 total: count,
                 currentPage,
                 pageSize
-            },
-            data: rows,
-            message: '文章列表获取成功'
+            }
         });
+
     } catch (error) {
-        res.status(500).json({
-            status: false,
-            data: [],
-            message: '文章列表获取失败',
-            errors: [error.message]
-        });
+        failure(res, error)
     }
 });
 
@@ -59,27 +60,11 @@ router.get('/', async function (req, res, next) {
  */
 router.get('/:id', async function (req, res, next) {
     try {
-        const { id } = req.params;
-        const article = await Article.findByPk(id)
+        const article = await getArticle(req);
 
-        if (!article) {
-            return res.status(404).json({
-                status: false,
-                message: '文章不存在'
-            });
-        }
-        res.json({
-            status: true,
-            data: article,
-            message: '文章详情获取成功'
-        });
+        success(res, '查询文章详情成功', { article });
     } catch (error) {
-        res.status(500).json({
-            status: false,
-            data: [],
-            message: '文章列表获取失败',
-            errors: [error.message]
-        });
+        failure(res, error)
     }
 });
 
@@ -94,28 +79,11 @@ router.post('/', async function (req, res, next) {
         const body = filterBody(req);
 
         const article = await Article.create(body);
-        res.status(201).json({
-            status: true,
-            data: article,
-            message: '文章创建成功'
-        });
+
+        success(res, '创建文章成功', { article }, 201);
+
     } catch (error) {
-        if (error.name === 'SequelizeValidationError') {
-            const errors = error.errors.map(e => e.message);
-            return res.status(400).json({
-                status: false,
-                message: '请求参数错误',
-                errors: errors
-            });
-        }
-        else {
-            res.status(500).json({
-                status: false,
-                data: [],
-                message: '文章创建失败',
-                errors: [error.message]
-            });
-        }
+        failure(res, error)
     }
 });
 /**
@@ -124,29 +92,14 @@ router.post('/', async function (req, res, next) {
  */
 router.delete('/:id', async function (req, res, next) {
     try {
-        const { id } = req.params;
-        const article = await Article.findByPk(id);
-        if (article) {
-            await article.destroy();
-            res.json({
-                status: true,
-                message: '文章删除成功'
-            });
+        const article = await getArticle(req);
 
-        } else {
-            return res.status(404).json({
-                status: false,
-                message: '文章不存在'
-            });
-        }
+        await article.destroy();
+
+        success(res, '删除文章成功', { article });
 
     } catch (error) {
-        res.status(500).json({
-            status: false,
-            data: [],
-            message: '文章删除失败',
-            errors: [error.message]
-        });
+        failure(res, error)
     }
 });
 
@@ -156,65 +109,40 @@ router.delete('/:id', async function (req, res, next) {
  */
 router.put('/:id', async function (req, res, next) {
     try {
-        const { id } = req.params;
-        const article = await Article.findByPk(id);
+
+        const article = await getArticle(req);
 
         // 验证参数
         const body = filterBody(req);
 
-        if (article) {
-            await article.update(req.body);
-            res.json({
-                status: true,
-                data: article,
-                message: '文章更新成功'
-            });
-        } else {
-            return res.status(404).json({
-                status: false,
-                message: '文章不存在'
-            });
-        }
+
+        await article.update(body);
+
+        success(res, '更新文章成功', { article });
+
     } catch (error) {
-        res.status(500).json({
-            status: false,
-            data: [],
-            message: '文章更新失败',
-            errors: [error.message]
-        });
+        failure(res, error)
     }
 });
 
-/*
- * 文章搜索
- * GET /admin/articles/page/:page
+
+/**
+ * 公共方法 查询当前文章
  */
-router.get('/page/:page', async function (req, res, next) {
-    try {
-        const { page } = req.params;
-        const condition = {
-            order: [['id', 'DESC']]
-        };
-        const articles = await Article.findAndCountAll({
-            ...condition,
-            limit: 10,
-            offset: (page - 1) * 10
-        });
-        res.json({
-            status: true,
-            data: articles,
-            message: '文章搜索成功'
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            data: [],
-            message: '文章搜索失败',
-            errors: [error.message]
-        });
-    }
-});
+async function getArticle(req) {
+    // 获取文章ID
+    const { id } = req.params;
 
+    //查询当前文章
+    const article = await Article.findByPk(id);
+
+    // 没找到抛出异常
+    if (!article) {
+        throw new NotFoundError('ID: ${id} 的文章未找到');
+    }
+
+    return article;
+}
 
 /*
  * 白名单过滤
